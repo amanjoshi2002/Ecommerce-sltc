@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sales Order Form</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        button {
+            display: block;
+            padding: 8px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .success-message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e6f7ec;
+            border: 1px solid #a3d7b3;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sales Order Form</h1>
+
+    <form id="sales-order-form" method="POST" action="{% url 'create_sales_order' %}">
+        {% csrf_token %}
+
+        <label for="retail">Retail Store:</label>
+        <input type="text" name="retail" id="retail_search" onkeyup="searchRetail(this.value)">
+        <ul id="retail_results"></ul>
+
+        <br>
+
+        <label for="products">Products:</label>
+        <div id="products-container">
+            <div class="product-row">
+                <input type="text" name="ITEM" class="product-input" placeholder="Product" onkeyup="searchProduct(this)">
+                <ul class="product-results"></ul>
+                <input type="number" name="QTY" class="quantity-input" placeholder="Quantity">
+                <button type="button" onclick="removeProductRow(this)">Remove</button>
+            </div>
+        </div>
+        <button type="button" onclick="addProductRow()">Add Product</button>
+
+        <br>
+
+        <button type="submit">Submit Order</button>
+    </form>
+
+    <div id="success-message" class="success-message" style="display: none;">
+        <h2>Order Submitted Successfully!</h2>
+        <p>Your order has been submitted. Thank you!</p>
+        <button onclick="copyOrderDetailsToClipboard()">Copy Order Details</button>
+    </div>
+
+    <script>
+        function searchRetail(query) {
+            $.ajax({
+                url: "{% url 'search_retail' %}",
+                data: { query: query },
+                success: function(response) {
+                    var resultsContainer = $("#retail_results");
+                    resultsContainer.empty();
+
+                    response.forEach(function(retail) {
+                        var li = $("<li></li>")
+                            .text(retail.name)
+                            .on("click", function() {
+                                $("#retail_search").val(retail.name);
+                                resultsContainer.empty();
+                            });
+
+                        resultsContainer.append(li);
+                    });
+                }
+            });
+        }
+
+        function searchProduct(input) {
+            var query = input.value;
+            var resultsContainer = $(input).next(".product-results");
+
+            $.ajax({
+                url: "{% url 'search_product' %}",
+                data: { query: query },
+                success: function(response) {
+                    resultsContainer.empty();
+
+                    response.forEach(function(product) {
+                        var li = $("<li></li>")
+                            .text(product.name)
+                            .on("click", function() {
+                                input.value = product.name;
+                                resultsContainer.empty();
+                            });
+
+                        resultsContainer.append(li);
+                    });
+                }
+            });
+        }
+
+        function addProductRow() {
+            var productsContainer = $("#products-container");
+            var productRow = $("<div></div>").addClass("product-row");
+
+            var productInput = $("<input>")
+                .attr("type", "text")
+                .attr("name", "ITEM")
+                .addClass("product-input")
+                .attr("placeholder", "Product")
+                .on("keyup", function() {
+                    searchProduct(this);
+                });
+
+            var productResults = $("<ul>").addClass("product-results");
+
+            var quantityInput = $("<input>")
+                .attr("type", "number")
+                .attr("name", "QTY")
+                .addClass("quantity-input")
+                .attr("placeholder", "Quantity");
+
+            var removeButton = $("<button>")
+                .attr("type", "button")
+                .text("Remove")
+                .on("click", function() {
+                    removeProductRow(this);
+                });
+
+            productRow.append(productInput);
+            productRow.append(productResults);
+            productRow.append(quantityInput);
+            productRow.append(removeButton);
+
+            productsContainer.append(productRow);
+        }
+
+        function removeProductRow(button) {
+            var productRow = $(button).closest(".product-row");
+            productRow.remove();
+        }
+
+        function copyOrderDetailsToClipboard() {
+            var orderDetails = $("#sales-order-form").serializeArray();
+            var textToCopy = "";
+        
+            // Iterate over form fields and construct the text to copy
+            orderDetails.forEach(function(field) {
+                if (field.name !== "csrfmiddlewaretoken") {
+                    textToCopy += field.name + "=" + decodeURIComponent(field.value) + "\n";
+                }
+            });
+        
+            // Create a temporary textarea element to hold the text to copy
+            var copyTextarea = $("<textarea>")
+                .val(textToCopy)
+                .appendTo("body")
+                .select();
+        
+            // Copy the text to clipboard
+            document.execCommand("copy");
+            copyTextarea.remove();
+        
+            alert("Order details copied to clipboard:\n\n" + textToCopy);
+        }
+        
+
+        $("#sales-order-form").submit(function(e) {
+            e.preventDefault();
+
+            var form = $(this);
+
+            $.ajax({
+                url: form.attr("action"),
+                type: form.attr("method"),
+                data: form.serialize(),
+                success: function() {
+                    form.hide();
+                    $("#success-message").show();
+                },
+                error: function() {
+                    alert("An error occurred while submitting the order.");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sales Order Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* Add your custom styles here */
+    </style>
+</head>
+<body>
+    <h1>Sales Order Details</h1>
+
+    <p>Retail: {{ sales_order.retail.name }}</p>
+
+    <ul>
+    {% for item in order_items %}
+        <li>{{ item.qty }} -- {{ item.product.name }}</li>
+    {% endfor %}
+    </ul>
+
+    <button id="copy-button" type="button" onclick="copyToClipboard()">Copy</button>
+
+    <script>
+    function copyToClipboard() {
+        var textToCopy = document.body.innerText;
+
+        // Try the modern clipboard API first
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    alert('Copied to clipboard!');
+                })
+                .catch((error) => {
+                    console.error('Failed to copy to clipboard:', error);
+                });
+        }
+        // Fallback for browsers that don't support the clipboard API
+        else {
+            var copyTextArea = document.createElement('textarea');
+            copyTextArea.value = textToCopy;
+            document.body.appendChild(copyTextArea);
+            copyTextArea.focus();
+            copyTextArea.select();
+            try {
+                var successful = document.execCommand('copy');
+                var message = successful ? 'Copied to clipboard!' : 'Unable to copy!';
+                alert(message);
+            } catch (error) {
+                console.error('Failed to copy to clipboard:', error);
+            }
+            document.body.removeChild(copyTextArea);
+        }
+    }
+    </script>
+</body>
+</html>

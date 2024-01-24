@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sales Order Success</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .order-details {
+            margin-bottom: 20px;
+        }
+
+        .copy-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .back-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #ccc;
+            color: black;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sales Order Success</h1>
+    <div class="order-details">
+        <h2>Retail Name: {{ retail_name }}</h2>
+        <h3>Product Names with Quantities:</h3>
+        <ul>
+            {% for product_name_quantity in product_names_quantities %}
+                <li>{{ product_name_quantity }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <button class="copy-button" onclick="copyToClipboard('{{ text_to_copy }}')">Copy Order Details</button>
+    <button class="back-button" onclick="goBack()">Back to Sales Order Form</button>
+
+    <script>
+        function copyToClipboard(text) {
+            // Remove square brackets []
+            text = text.replace(/\[\]/g, '');
+    
+            var copyTextarea = document.createElement("textarea");
+            copyTextarea.value = text;
+            document.body.appendChild(copyTextarea);
+            copyTextarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(copyTextarea);
+        
+            alert("Order details copied to clipboard:\n\n" + text);
+        }
+        
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>
